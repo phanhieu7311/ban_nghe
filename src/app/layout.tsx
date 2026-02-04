@@ -5,12 +5,12 @@ import CustomerLayout from "@/components/CustomerLayout";
 
 const outfit = Outfit({
   variable: "--font-outfit",
-  subsets: ["latin", "vietnamese"],
+  subsets: ["latin"],
 });
 
 const dancingScript = Dancing_Script({
   variable: "--font-dancing",
-  subsets: ["latin", "vietnamese"],
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
