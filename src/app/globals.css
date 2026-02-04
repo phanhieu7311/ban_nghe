@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: #D4AF37;
+  --color-primary-light: #F5E6B3;
+  --color-primary-dark: #B8960C;
+  --color-accent: #DAA520;
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #FFFAF0;
+  --color-text: #333333;
+  --color-text-light: #666666;
+  --color-border: #E5E5E5;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Utility classes */
+.btn-primary {
+  @apply px-6 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg 
+         hover:bg-[var(--color-primary-dark)] transition-all duration-300 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 border-2 border-[var(--color-primary)] text-[var(--color-primary)] 
+         font-semibold rounded-lg hover:bg-[var(--color-primary)] hover:text-white 
+         transition-all duration-300;
+}
+
+.btn-ghost {
+  @apply px-4 py-2 text-[var(--color-text-light)] hover:text-[var(--color-primary)] 
+         transition-colors duration-200;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-md overflow-hidden border border-[var(--color-border)]
+         hover:shadow-xl transition-shadow duration-300;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 border border-[var(--color-border)] rounded-lg 
+         focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent 
+         outline-none transition-all duration-200;
+}
+
+.badge {
+  @apply inline-block px-3 py-1 text-sm font-medium rounded-full;
+}
+
+.badge-pending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-confirmed {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-shipping {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.badge-delivered {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-cancelled {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Gold gradient */
+.gold-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
