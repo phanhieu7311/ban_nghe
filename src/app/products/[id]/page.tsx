@@ -113,8 +113,8 @@ export default function ProductDetailPage() {
                   key={index}
                   onClick={() => setSelectedImage(index)}
                   className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                      ? 'border-[var(--color-primary)]'
-                      : 'border-transparent hover:border-[var(--color-primary-light)]'
+                    ? 'border-[var(--color-primary)]'
+                    : 'border-transparent hover:border-[var(--color-primary-light)]'
                     }`}
                 >
                   <Image src={image} alt="" fill className="object-cover" />
@@ -132,11 +132,31 @@ export default function ProductDetailPage() {
             </span>
           )}
 
+          {product.sale_price && product.sale_price < product.price && (
+            <span className="inline-block px-3 py-1 bg-orange-500 text-white text-sm font-bold rounded-full ml-2">
+              SALE
+            </span>
+          )}
+
           <h1 className="text-3xl lg:text-4xl font-bold">{product.name}</h1>
 
-          <p className="text-3xl font-bold text-[var(--color-primary)]">
-            {formatPrice(product.price)}
-          </p>
+          {product.sale_price && product.sale_price < product.price ? (
+            <div className="flex items-baseline gap-3">
+              <p className="text-3xl font-bold text-orange-600">
+                {formatPrice(product.sale_price)}
+              </p>
+              <p className="text-xl text-[var(--color-text-light)] line-through">
+                {formatPrice(product.price)}
+              </p>
+              <span className="px-2 py-1 bg-orange-100 text-orange-600 text-sm font-medium rounded">
+                -{Math.round((1 - product.sale_price / product.price) * 100)}%
+              </span>
+            </div>
+          ) : (
+            <p className="text-3xl font-bold text-[var(--color-primary)]">
+              {formatPrice(product.price)}
+            </p>
+          )}
 
           {/* Stock Status */}
           <div className="flex items-center gap-2">
@@ -191,8 +211,8 @@ export default function ProductDetailPage() {
               <button
                 onClick={handleAddToCart}
                 className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${isAdded
-                    ? 'bg-green-500 text-white'
-                    : 'gold-gradient text-white hover:shadow-lg transform hover:-translate-y-0.5'
+                  ? 'bg-green-500 text-white'
+                  : 'gold-gradient text-white hover:shadow-lg transform hover:-translate-y-0.5'
                   }`}
               >
                 {isAdded ? '✓ Đã thêm vào giỏ hàng' : 'Thêm vào giỏ hàng'}

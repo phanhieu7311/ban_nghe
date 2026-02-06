@@ -17,6 +17,7 @@ export default function AdminProductsPage() {
     name: '',
     description: '',
     price: '',
+    sale_price: '',
     stock: '',
     category: '',
     images: [] as string[],
@@ -48,6 +49,7 @@ export default function AdminProductsPage() {
       name: '',
       description: '',
       price: '',
+      sale_price: '',
       stock: '',
       category: '',
       images: [],
@@ -61,6 +63,7 @@ export default function AdminProductsPage() {
       name: product.name,
       description: product.description || '',
       price: String(product.price),
+      sale_price: product.sale_price ? String(product.sale_price) : '',
       stock: String(product.stock),
       category: product.category || '',
       images: product.images || [],
@@ -148,6 +151,7 @@ export default function AdminProductsPage() {
         name: formData.name,
         description: formData.description || null,
         price: parseFloat(formData.price),
+        sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
         stock: parseInt(formData.stock),
         category: formData.category || null,
         images: formData.images,
@@ -229,7 +233,8 @@ export default function AdminProductsPage() {
             <tr>
               <th className="px-6 py-4 text-left font-semibold">Sản phẩm</th>
               <th className="px-6 py-4 text-left font-semibold">Danh mục</th>
-              <th className="px-6 py-4 text-right font-semibold">Giá</th>
+              <th className="px-6 py-4 text-right font-semibold">Giá gốc</th>
+              <th className="px-6 py-4 text-right font-semibold">Giá sale</th>
               <th className="px-6 py-4 text-center font-semibold">Tồn kho</th>
               <th className="px-6 py-4 text-center font-semibold">Thao tác</th>
             </tr>
@@ -237,7 +242,7 @@ export default function AdminProductsPage() {
           <tbody className="divide-y divide-[var(--color-border)]">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-[var(--color-text-light)]">
+                <td colSpan={6} className="px-6 py-12 text-center text-[var(--color-text-light)]">
                   Chưa có sản phẩm nào
                 </td>
               </tr>
@@ -266,6 +271,15 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-[var(--color-primary)]">
                     {formatPrice(product.price)}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {product.sale_price && product.sale_price < product.price ? (
+                      <span className="font-medium text-orange-600">
+                        {formatPrice(product.sale_price)}
+                      </span>
+                    ) : (
+                      <span className="text-[var(--color-text-light)]">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`font-medium ${product.stock <= 5 ? 'text-red-600' : ''}`}>
@@ -335,7 +349,7 @@ export default function AdminProductsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Giá (VNĐ) *</label>
+                  <label className="block text-sm font-medium mb-2">Giá gốc (VNĐ) *</label>
                   <input
                     type="number"
                     name="price"
@@ -346,6 +360,24 @@ export default function AdminProductsPage() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Giá sale (VNĐ)
+                    <span className="text-xs text-[var(--color-text-light)] ml-1">(nếu có)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="sale_price"
+                    value={formData.sale_price}
+                    onChange={handleInputChange}
+                    className="input-field"
+                    min="0"
+                    placeholder="Để trống nếu không sale"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Tồn kho *</label>
                   <input
@@ -358,18 +390,17 @@ export default function AdminProductsPage() {
                     required
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Danh mục</label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="VD: Điện tử, Thời trang..."
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-2">Danh mục</label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="input-field"
+                    placeholder="VD: Điện tử, Thời trang..."
+                  />
+                </div>
               </div>
 
               <div>

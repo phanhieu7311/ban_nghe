@@ -54,6 +54,11 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               <span className="text-white font-bold text-lg">Hết hàng</span>
             </div>
           )}
+          {product.sale_price && product.sale_price < product.price && (
+            <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              SALE
+            </div>
+          )}
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-lg mb-1 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
@@ -63,17 +68,30 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             <span className="text-sm text-[var(--color-text-light)]">{product.category}</span>
           )}
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xl font-bold text-[var(--color-primary)]">
-              {formatPrice(product.price)}
-            </span>
+            <div className="flex items-baseline gap-2">
+              {product.sale_price && product.sale_price < product.price ? (
+                <>
+                  <span className="text-xl font-bold text-orange-600">
+                    {formatPrice(product.sale_price)}
+                  </span>
+                  <span className="text-sm text-[var(--color-text-light)] line-through">
+                    {formatPrice(product.price)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xl font-bold text-[var(--color-primary)]">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </div>
             <button
               onClick={handleAddToCart}
               disabled={product.stock === 0 || isAdding}
               className={`p-2 rounded-full transition-all duration-300 ${product.stock === 0
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : isAdding
-                    ? 'bg-green-500 text-white'
-                    : 'bg-[var(--color-primary-light)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : isAdding
+                  ? 'bg-green-500 text-white'
+                  : 'bg-[var(--color-primary-light)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white'
                 }`}
             >
               {isAdding ? (

@@ -21,6 +21,7 @@ function HomePageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
+  const [showSaleOnly, setShowSaleOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   const searchQuery = searchParams.get('q') || '';
@@ -32,7 +33,7 @@ function HomePageContent() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedPriceRanges]);
+  }, [searchQuery, selectedPriceRanges, showSaleOnly]);
 
   const fetchProducts = async () => {
     try {
@@ -56,21 +57,29 @@ function HomePageContent() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-      // If no price ranges selected, show all
+      // Check sale filter
+      if (showSaleOnly && (!product.sale_price || product.sale_price >= product.price)) {
+        return false;
+      }
+
+      // If no price ranges selected, show all that match search and sale filter
       if (selectedPriceRanges.length === 0) {
         return matchesSearch;
       }
 
       // Check if product price falls in any selected range
+      const priceToCheck = product.sale_price && product.sale_price < product.price
+        ? product.sale_price
+        : product.price;
       const matchesPrice = selectedPriceRanges.some((rangeId) => {
         const range = PRICE_RANGES.find((r) => r.id === rangeId);
         if (!range) return false;
-        return product.price >= range.min && product.price < range.max;
+        return priceToCheck >= range.min && priceToCheck < range.max;
       });
 
       return matchesSearch && matchesPrice;
     });
-  }, [products, searchQuery, selectedPriceRanges]);
+  }, [products, searchQuery, selectedPriceRanges, showSaleOnly]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
@@ -98,6 +107,7 @@ function HomePageContent() {
 
   const clearFilters = useCallback(() => {
     setSelectedPriceRanges([]);
+    setShowSaleOnly(false);
   }, []);
 
   if (loading) {
@@ -123,7 +133,7 @@ function HomePageContent() {
           <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm p-5 sticky top-24">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-[var(--color-text)]">Bộ lọc</h3>
-              {selectedPriceRanges.length > 0 && (
+              {(selectedPriceRanges.length > 0 || showSaleOnly) && (
                 <button
                   onClick={clearFilters}
                   className="text-sm text-[var(--color-primary)] hover:underline"
@@ -131,6 +141,22 @@ function HomePageContent() {
                   Xóa tất cả
                 </button>
               )}
+            </div>
+
+            {/* Sale Filter */}
+            <div className="mb-5 pb-5 border-b border-[var(--color-border)]">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={showSaleOnly}
+                  onChange={() => setShowSaleOnly(!showSaleOnly)}
+                  className="w-4 h-4 rounded border-[var(--color-border)] text-orange-500 focus:ring-orange-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-[var(--color-text)] group-hover:text-orange-500 transition-colors flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">SALE</span>
+                  Chỉ hiển thị sản phẩm sale
+                </span>
+              </label>
             </div>
 
             {/* Price Filter */}

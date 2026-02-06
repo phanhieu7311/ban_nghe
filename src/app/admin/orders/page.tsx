@@ -8,6 +8,9 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   useEffect(() => {
     fetchOrders();
@@ -91,9 +94,29 @@ export default function AdminOrdersPage() {
     );
   };
 
-  const filteredOrders = statusFilter
-    ? orders.filter(order => order.status === statusFilter)
-    : orders;
+  const filteredOrders = orders.filter(order => {
+    const matchStatus = !statusFilter || order.status === statusFilter;
+    const matchPayment = !paymentFilter || (order as unknown as { payment_method?: string }).payment_method === paymentFilter;
+    return matchStatus && matchPayment;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ordersPerPage,
+    currentPage * ordersPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handlePaymentFilter = (value: string) => {
+    setPaymentFilter(value);
+    setCurrentPage(1);
+  };
 
   if (loading) {
     return (
@@ -105,22 +128,67 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Quản lý đơn hàng</h1>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Quản lý đơn hàng</h1>
+          <p className="text-sm text-[var(--color-text-light)] mt-1">
+            Tổng cộng {filteredOrders.length} đơn hàng
+          </p>
+        </div>
+      </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--color-text-light)]">Lọc:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="input-field w-40"
-          >
-            <option value="">Tất cả</option>
-            {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+      {/* Filters Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border)] p-4 mb-6">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[var(--color-primary-light)] rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </div>
+            <label className="text-sm text-[var(--color-text-light)] font-bold">Trạng thái:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+            >
+              <option value="">Tất cả</option>
+              {statusOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <label className="text-sm text-[var(--color-text-light)] font-bold">Thanh toán:</label>
+            <select
+              value={paymentFilter}
+              onChange={(e) => handlePaymentFilter(e.target.value)}
+              className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+            >
+              <option value="">Tất cả</option>
+              <option value="cod">COD</option>
+              <option value="bank_transfer">Chuyển khoản</option>
+            </select>
+          </div>
+
+          {(statusFilter || paymentFilter) && (
+            <button
+              onClick={() => { setStatusFilter(''); setPaymentFilter(''); setCurrentPage(1); }}
+              className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1 ml-auto"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Xóa bộ lọc
+            </button>
+          )}
         </div>
       </div>
 
@@ -139,14 +207,14 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            {filteredOrders.length === 0 ? (
+            {paginatedOrders.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-light)]">
                   Không có đơn hàng nào
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order) => (
+              paginatedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
                   <td className="px-6 py-4">
                     <span className="font-mono text-sm">{order.id.slice(0, 8)}...</span>
@@ -165,8 +233,8 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`text-xs px-2 py-1 rounded-full ${(order as unknown as { payment_method?: string }).payment_method === 'bank_transfer'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-gray-100 text-gray-800'
                       }`}>
                       {(order as unknown as { payment_method?: string }).payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'COD'}
                     </span>
@@ -191,6 +259,47 @@ export default function AdminOrdersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages >= 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-[var(--color-text-light)]">
+            Hiển thị {(currentPage - 1) * ordersPerPage + 1} - {Math.min(currentPage * ordersPerPage, filteredOrders.length)} trong tổng số {filteredOrders.length} đơn hàng
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-10 h-10 rounded-lg font-medium transition-colors ${currentPage === page
+                  ? 'gold-gradient text-white'
+                  : 'border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]'
+                  }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Order Detail Modal */}
       {selectedOrder && (
@@ -234,8 +343,8 @@ export default function AdminOrdersPage() {
                   <p>
                     <span className="text-[var(--color-text-light)]">Thanh toán:</span>{' '}
                     <span className={`font-medium ${(selectedOrder as unknown as { payment_method?: string }).payment_method === 'bank_transfer'
-                        ? 'text-blue-600'
-                        : 'text-gray-600'
+                      ? 'text-blue-600'
+                      : 'text-gray-600'
                       }`}>
                       {(selectedOrder as unknown as { payment_method?: string }).payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
                     </span>
