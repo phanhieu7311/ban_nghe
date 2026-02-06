@@ -12,12 +12,12 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="min-h-screen">
+      <main className="flex-1">
         {children}
       </main>
-      <footer className="bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] py-8 mt-16">
+      <footer className="bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="text-[var(--color-text-light)]">
             © 2026 Tinh bột nghệ Xoan Linh. All rights reserved.
@@ -30,6 +30,6 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </p>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
