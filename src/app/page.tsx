@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase, Product } from '@/lib/supabase';
 import ProductCard from '@/components/ProductCard';
+import BannerCarousel from '@/components/BannerCarousel';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -68,15 +69,8 @@ function HomePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <div className="gold-gradient rounded-2xl p-8 md:p-12 mb-12 text-white">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4">
-          Chào mừng đến với Xoan Linh
-        </h1>
-        <p className="text-lg md:text-xl opacity-90 max-w-2xl">
-          Khám phá bộ sưu tập sản phẩm chất lượng cao với giá cả hợp lý
-        </p>
-      </div>
+      {/* Banner Carousel */}
+      <BannerCarousel />
 
       {/* Category Filter */}
       {categories.length > 0 && (
