@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { CartItem, getCart, getCartTotal, clearCart } from '@/lib/cart';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -104,6 +105,21 @@ export default function CheckoutPage() {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // Send Telegram notification
+      await sendTelegramNotification({
+        orderId: order.id,
+        customerName: formData.customer_name,
+        customerPhone: formData.customer_phone,
+        customerEmail: formData.customer_email || undefined,
+        customerAddress: formData.customer_address,
+        items: cart.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+        total: total,
+      });
 
       // Clear cart and show success
       clearCart();

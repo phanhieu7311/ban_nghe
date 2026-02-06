@@ -20,7 +20,13 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
       <footer className="bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p className="text-[var(--color-text-light)]">
-            © 2026 Bán Nghé. All rights reserved.
+            © 2026 Tinh bột nghệ Xoan Linh. All rights reserved.
+          </p>
+          <p className="text-[var(--color-text-light)]">
+            Hotline: 0326628471
+          </p>
+          <p className="text-[var(--color-text-light)]">
+            Địa chỉ: 81 đê La Thành nhỏ, phường Ô Chợ Dừa, quận Đống Đa, Hà Nội
           </p>
         </div>
       </footer>
