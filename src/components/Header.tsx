@@ -65,8 +65,11 @@ function HeaderContent() {
             </div>
           </Link>
 
+          {/* Spacer */}
+          <div className="flex-1" />
+
           {/* Search Box */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          <form onSubmit={handleSearch} className="w-64 lg:w-80">
             <div className="relative">
               <svg
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-light)]"

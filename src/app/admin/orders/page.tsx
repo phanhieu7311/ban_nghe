@@ -133,6 +133,7 @@ export default function AdminOrdersPage() {
               <th className="px-6 py-4 text-left font-semibold">Khách hàng</th>
               <th className="px-6 py-4 text-left font-semibold">Ngày đặt</th>
               <th className="px-6 py-4 text-right font-semibold">Tổng tiền</th>
+              <th className="px-6 py-4 text-center font-semibold">Thanh toán</th>
               <th className="px-6 py-4 text-center font-semibold">Trạng thái</th>
               <th className="px-6 py-4 text-center font-semibold">Thao tác</th>
             </tr>
@@ -140,7 +141,7 @@ export default function AdminOrdersPage() {
           <tbody className="divide-y divide-[var(--color-border)]">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-[var(--color-text-light)]">
+                <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-light)]">
                   Không có đơn hàng nào
                 </td>
               </tr>
@@ -161,6 +162,14 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4 text-right font-bold text-[var(--color-primary)]">
                     {formatPrice(order.total)}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`text-xs px-2 py-1 rounded-full ${(order as unknown as { payment_method?: string }).payment_method === 'bank_transfer'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
+                      }`}>
+                      {(order as unknown as { payment_method?: string }).payment_method === 'bank_transfer' ? 'Chuyển khoản' : 'COD'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     {getStatusBadge(order.status)}
@@ -222,6 +231,15 @@ export default function AdminOrdersPage() {
                     <p><span className="text-[var(--color-text-light)]">Email:</span> {selectedOrder.customer_email}</p>
                   )}
                   <p><span className="text-[var(--color-text-light)]">Địa chỉ:</span> {selectedOrder.customer_address}</p>
+                  <p>
+                    <span className="text-[var(--color-text-light)]">Thanh toán:</span>{' '}
+                    <span className={`font-medium ${(selectedOrder as unknown as { payment_method?: string }).payment_method === 'bank_transfer'
+                        ? 'text-blue-600'
+                        : 'text-gray-600'
+                      }`}>
+                      {(selectedOrder as unknown as { payment_method?: string }).payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
+                    </span>
+                  </p>
                 </div>
               </div>
 
@@ -256,8 +274,8 @@ export default function AdminOrdersPage() {
                       key={option.value}
                       onClick={() => updateOrderStatus(selectedOrder.id, option.value)}
                       className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedOrder.status === option.value
-                          ? 'gold-gradient text-white'
-                          : 'bg-[var(--color-bg-secondary)] hover:bg-[var(--color-primary-light)]'
+                        ? 'gold-gradient text-white'
+                        : 'bg-[var(--color-bg-secondary)] hover:bg-[var(--color-primary-light)]'
                         }`}
                     >
                       {option.label}

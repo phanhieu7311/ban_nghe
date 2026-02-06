@@ -12,6 +12,7 @@ export interface OrderNotification {
     price: number;
   }[];
   total: number;
+  paymentMethod?: string;
 }
 
 const formatPrice = (price: number): string => {
@@ -49,6 +50,8 @@ export async function sendTelegramNotification(order: OrderNotification): Promis
 ${itemsList}
 
 💰 *Tổng cộng:* ${formatPrice(order.total)}
+
+💳 *Thanh toán:* ${order.paymentMethod || 'Chưa xác định'}
 
 ⏰ ${new Date().toLocaleString('vi-VN')}
 `.trim();
