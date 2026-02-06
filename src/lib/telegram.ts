@@ -10,6 +10,7 @@ export interface OrderNotification {
     name: string;
     quantity: number;
     price: number;
+    salePrice?: number | null;
   }[];
   total: number;
   paymentMethod?: string;
@@ -32,7 +33,13 @@ export async function sendTelegramNotification(order: OrderNotification): Promis
   }
 
   const itemsList = order.items
-    .map((item) => `  • ${item.name} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`)
+    .map((item) => {
+      const effectivePrice = item.salePrice && item.salePrice < item.price ? item.salePrice : item.price;
+      const priceDisplay = item.salePrice && item.salePrice < item.price
+        ? `${formatPrice(item.salePrice)} (gốc: ${formatPrice(item.price)})`
+        : formatPrice(item.price);
+      return `  • ${item.name} x${item.quantity} @ ${priceDisplay} = ${formatPrice(effectivePrice * item.quantity)}`;
+    })
     .join('\n');
 
   const message = `

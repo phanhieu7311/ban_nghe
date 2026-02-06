@@ -103,10 +103,10 @@ export default function CartPage() {
                 <span className="text-[var(--color-text-light)]">Tạm tính</span>
                 <span className="font-medium">{formatPrice(total)}</span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-[var(--color-text-light)]">Phí vận chuyển</span>
                 <span className="font-medium text-green-600">Miễn phí</span>
-              </div>
+              </div> */}
               <hr className="border-[var(--color-border)]" />
               <div className="flex justify-between">
                 <span className="font-bold text-lg">Tổng cộng</span>

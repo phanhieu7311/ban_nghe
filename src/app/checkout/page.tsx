@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { CartItem, getCart, getCartTotal, clearCart } from '@/lib/cart';
+import { CartItem, getCart, getCartTotal, clearCart, getItemPrice } from '@/lib/cart';
 import { sendTelegramNotification } from '@/lib/telegram';
 
 type PaymentMethod = 'cod' | 'bank_transfer';
@@ -18,6 +18,15 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
+  const [completedOrderData, setCompletedOrderData] = useState<{
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    customerAddress: string;
+    items: { name: string; quantity: number; price: number; salePrice: number | null }[];
+    total: number;
+    paymentMethod: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -132,6 +141,9 @@ export default function CheckoutPage() {
         product_id: item.product.id,
         quantity: item.quantity,
         unit_price: item.product.price,
+        sale_price: item.product.sale_price && item.product.sale_price < item.product.price
+          ? item.product.sale_price
+          : null,
       }));
 
       const { error: itemsError } = await supabase
@@ -151,6 +163,27 @@ export default function CheckoutPage() {
           name: item.product.name,
           quantity: item.quantity,
           price: item.product.price,
+          salePrice: item.product.sale_price && item.product.sale_price < item.product.price
+            ? item.product.sale_price
+            : null,
+        })),
+        total: total,
+        paymentMethod: paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'Chuyển khoản ngân hàng',
+      });
+
+      // Save order data before clearing cart
+      setCompletedOrderData({
+        customerName: formData.customer_name,
+        customerPhone: formData.customer_phone,
+        customerEmail: formData.customer_email,
+        customerAddress: formData.customer_address,
+        items: cart.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          salePrice: item.product.sale_price && item.product.sale_price < item.product.price
+            ? item.product.sale_price
+            : null,
         })),
         total: total,
         paymentMethod: paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'Chuyển khoản ngân hàng',
@@ -184,25 +217,123 @@ export default function CheckoutPage() {
     );
   }
 
-  if (orderSuccess) {
+  if (orderSuccess && completedOrderData) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Đặt hàng thành công!</h1>
+            <p className="text-[var(--color-text-light)]">Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
           </div>
-          <h1 className="text-3xl font-bold mb-4">Đặt hàng thành công!</h1>
-          <p className="text-[var(--color-text-light)] mb-2">
-            Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất.
-          </p>
-          <p className="text-sm text-[var(--color-text-light)] mb-8">
-            Mã đơn hàng: <span className="font-mono font-medium">{orderId}</span>
-          </p>
-          <Link href="/" className="btn-primary">
-            Tiếp tục mua sắm
-          </Link>
+
+          {/* Order Details Card */}
+          <div className="bg-white rounded-xl shadow-md border border-[var(--color-border)] p-6 mb-6">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-[var(--color-border)]">
+              <h2 className="text-xl font-bold">Chi tiết đơn hàng</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-mono bg-[var(--color-bg-secondary)] px-3 py-1 rounded-lg">{orderId}</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(orderId || '');
+                      const icon = document.getElementById('copy-icon');
+                      if (icon) {
+                        icon.className = 'fa-solid fa-check text-green-500';
+                        setTimeout(() => { icon.className = 'fa-solid fa-copy'; }, 1500);
+                      }
+                    }}
+                    className="p-2 hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors text-[var(--color-text-light)] hover:text-[var(--color-primary)]"
+                  >
+                    <i id="copy-icon" className="fa-solid fa-copy"></i>
+                  </button>
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                    Copy
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Info */}
+            <div className="mb-6">
+              <h3 className="font-semibold text-[var(--color-text-light)] mb-3">Thông tin khách hàng</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-[var(--color-text-light)]">Họ tên:</span>
+                  <p className="font-medium">{completedOrderData.customerName}</p>
+                </div>
+                <div>
+                  <span className="text-[var(--color-text-light)]">Số điện thoại:</span>
+                  <p className="font-medium">{completedOrderData.customerPhone}</p>
+                </div>
+                {completedOrderData.customerEmail && (
+                  <div>
+                    <span className="text-[var(--color-text-light)]">Email:</span>
+                    <p className="font-medium">{completedOrderData.customerEmail}</p>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <span className="text-[var(--color-text-light)]">Địa chỉ:</span>
+                  <p className="font-medium">{completedOrderData.customerAddress}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Products */}
+            <div className="mb-6">
+              <h3 className="font-semibold text-[var(--color-text-light)] mb-3">Sản phẩm</h3>
+              <div className="space-y-3">
+                {completedOrderData.items.map((item, index) => {
+                  const effectivePrice = item.salePrice || item.price;
+                  const hasSalePrice = item.salePrice !== null;
+                  return (
+                    <div key={index} className="flex justify-between items-center py-2 border-b border-[var(--color-border)] last:border-0">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-[var(--color-text-light)]">
+                          {hasSalePrice ? (
+                            <>
+                              <span className="text-orange-600 font-medium">{formatPrice(item.salePrice!)}</span>
+                              <span className="line-through ml-1">{formatPrice(item.price)}</span>
+                              <span> x {item.quantity}</span>
+                            </>
+                          ) : (
+                            <>{formatPrice(item.price)} x {item.quantity}</>
+                          )}
+                        </p>
+                      </div>
+                      <p className={`font-bold ${hasSalePrice ? 'text-orange-600' : ''}`}>
+                        {formatPrice(effectivePrice * item.quantity)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Payment & Total */}
+            <div className="pt-4 border-t border-[var(--color-border)]">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[var(--color-text-light)]">Thanh toán:</span>
+                <span className="font-medium">{completedOrderData.paymentMethod}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-lg">Tổng cộng:</span>
+                <span className="font-bold text-xl text-[var(--color-primary)]">{formatPrice(completedOrderData.total)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link href="/" className="btn-primary inline-block">
+              Tiếp tục mua sắm
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -413,35 +544,47 @@ export default function CheckoutPage() {
             <h2 className="text-xl font-bold mb-6">Đơn hàng của bạn</h2>
 
             <div className="space-y-4 mb-6">
-              {cart.map((item) => (
-                <div key={item.product.id} className="flex gap-3">
-                  <div className="relative w-16 h-16 bg-[var(--color-bg-secondary)] rounded-lg overflow-hidden flex-shrink-0">
-                    {item.product.images && item.product.images.length > 0 ? (
-                      <Image
-                        src={item.product.images[0]}
-                        alt={item.product.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[var(--color-text-light)]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+              {cart.map((item) => {
+                const hasSalePrice = item.product.sale_price && item.product.sale_price < item.product.price;
+                const itemPrice = getItemPrice(item.product);
+                return (
+                  <div key={item.product.id} className="flex gap-3">
+                    <div className="relative w-16 h-16 bg-[var(--color-bg-secondary)] rounded-lg overflow-hidden flex-shrink-0">
+                      {item.product.images && item.product.images.length > 0 ? (
+                        <Image
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[var(--color-text-light)]">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{item.product.name}</p>
+                      <div className="text-sm text-[var(--color-text-light)]">
+                        {hasSalePrice ? (
+                          <span>
+                            <span className="text-orange-600 font-medium">{formatPrice(item.product.sale_price!)}</span>
+                            <span className="line-through ml-1">{formatPrice(item.product.price)}</span>
+                            <span> x {item.quantity}</span>
+                          </span>
+                        ) : (
+                          <span>{formatPrice(item.product.price)} x {item.quantity}</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{item.product.name}</p>
-                    <p className="text-sm text-[var(--color-text-light)]">
-                      {formatPrice(item.product.price)} x {item.quantity}
+                    </div>
+                    <p className={`font-medium text-sm ${hasSalePrice ? 'text-orange-600' : ''}`}>
+                      {formatPrice(itemPrice * item.quantity)}
                     </p>
                   </div>
-                  <p className="font-medium text-sm">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-[var(--color-border)] pt-4">

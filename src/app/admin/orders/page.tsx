@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase, OrderWithItems } from '@/lib/supabase';
 
 export default function AdminOrdersPage() {
@@ -9,8 +9,11 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -97,7 +100,8 @@ export default function AdminOrdersPage() {
   const filteredOrders = orders.filter(order => {
     const matchStatus = !statusFilter || order.status === statusFilter;
     const matchPayment = !paymentFilter || (order as unknown as { payment_method?: string }).payment_method === paymentFilter;
-    return matchStatus && matchPayment;
+    const matchSearch = !searchQuery || order.id === searchQuery;
+    return matchStatus && matchPayment && matchSearch;
   });
 
   // Pagination
@@ -141,6 +145,64 @@ export default function AdminOrdersPage() {
       {/* Filters Card */}
       <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border)] p-4 mb-6">
         <div className="flex flex-wrap items-center gap-6">
+          {/* Search by Order ID */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Nhập chính xác mã đơn hàng..."
+              value={searchInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
+
+                // Clear previous timeout
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                // Set new timeout for 1 seconds
+                searchTimeoutRef.current = setTimeout(() => {
+                  setSearchQuery(value);
+                  setCurrentPage(1);
+                }, 1000);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  // Clear timeout and search immediately
+                  if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current);
+                  }
+                  setSearchQuery(searchInput);
+                  setCurrentPage(1);
+                }
+              }}
+              className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none w-64"
+            />
+            {searchInput && (
+              <button
+                onClick={() => {
+                  if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current);
+                  }
+                  setSearchInput('');
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
+                className="text-[var(--color-text-light)] hover:text-red-500 transition-colors"
+                title="Xóa tìm kiếm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-[var(--color-primary-light)] rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,17 +418,33 @@ export default function AdminOrdersPage() {
               <div>
                 <h3 className="font-semibold mb-3">Sản phẩm</h3>
                 <div className="space-y-3">
-                  {selectedOrder.order_items?.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-[var(--color-border)] last:border-0">
-                      <div>
-                        <p className="font-medium">{item.product?.name || 'Sản phẩm không xác định'}</p>
-                        <p className="text-sm text-[var(--color-text-light)]">
-                          {formatPrice(item.unit_price)} x {item.quantity}
+                  {selectedOrder.order_items?.map((item) => {
+                    const effectivePrice = item.sale_price && item.sale_price < item.unit_price
+                      ? item.sale_price
+                      : item.unit_price;
+                    const hasSalePrice = item.sale_price && item.sale_price < item.unit_price;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between py-2 border-b border-[var(--color-border)] last:border-0">
+                        <div>
+                          <p className="font-medium">{item.product?.name || 'Sản phẩm không xác định'}</p>
+                          <p className="text-sm text-[var(--color-text-light)]">
+                            {hasSalePrice ? (
+                              <>
+                                <span className="text-orange-600 font-medium">{formatPrice(item.sale_price!)}</span>
+                                <span className="line-through ml-1">{formatPrice(item.unit_price)}</span>
+                                <span> x {item.quantity}</span>
+                              </>
+                            ) : (
+                              <>{formatPrice(item.unit_price)} x {item.quantity}</>
+                            )}
+                          </p>
+                        </div>
+                        <p className={`font-bold ${hasSalePrice ? 'text-orange-600' : ''}`}>
+                          {formatPrice(effectivePrice * item.quantity)}
                         </p>
                       </div>
-                      <p className="font-bold">{formatPrice(item.unit_price * item.quantity)}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="flex justify-between items-center pt-4 mt-4 border-t border-[var(--color-border)]">
                   <span className="font-bold text-lg">Tổng cộng</span>

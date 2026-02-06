@@ -57,6 +57,12 @@ export function clearCart(): void {
   localStorage.removeItem(CART_KEY);
 }
 
+export function getItemPrice(product: Product): number {
+  return product.sale_price && product.sale_price < product.price
+    ? product.sale_price
+    : product.price;
+}
+
 export function getCartTotal(cart: CartItem[]): number {
-  return cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  return cart.reduce((total, item) => total + getItemPrice(item.product) * item.quantity, 0);
 }

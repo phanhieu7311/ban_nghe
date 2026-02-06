@@ -1,6 +1,6 @@
 'use client';
 
-import { CartItem } from '@/lib/cart';
+import { CartItem, getItemPrice } from '@/lib/cart';
 import Image from 'next/image';
 
 interface CartItemCardProps {
@@ -16,6 +16,9 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
       currency: 'VND',
     }).format(price);
   };
+
+  const hasSalePrice = item.product.sale_price && item.product.sale_price < item.product.price;
+  const displayPrice = getItemPrice(item.product);
 
   return (
     <div className="flex gap-4 p-4 bg-white rounded-xl shadow-sm border border-[var(--color-border)]">
@@ -41,9 +44,16 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
       {/* Product Info */}
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-lg truncate">{item.product.name}</h3>
-        <p className="text-[var(--color-primary)] font-bold mt-1">
-          {formatPrice(item.product.price)}
-        </p>
+        <div className="flex items-baseline gap-2 mt-1">
+          {hasSalePrice ? (
+            <>
+              <span className="text-orange-600 font-bold">{formatPrice(item.product.sale_price!)}</span>
+              <span className="text-sm text-[var(--color-text-light)] line-through">{formatPrice(item.product.price)}</span>
+            </>
+          ) : (
+            <span className="text-[var(--color-primary)] font-bold">{formatPrice(item.product.price)}</span>
+          )}
+        </div>
 
         {/* Quantity Controls */}
         <div className="flex items-center gap-3 mt-3">
@@ -79,8 +89,8 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
-        <p className="font-bold text-lg">
-          {formatPrice(item.product.price * item.quantity)}
+        <p className={`font-bold text-lg ${hasSalePrice ? 'text-orange-600' : ''}`}>
+          {formatPrice(displayPrice * item.quantity)}
         </p>
       </div>
     </div>
